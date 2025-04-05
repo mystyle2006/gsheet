@@ -1,3 +1,4 @@
 /target
 client_secret.json
 token_cache.json
+gsheet_config.json

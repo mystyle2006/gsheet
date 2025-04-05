@@ -1,9 +1,10 @@
 use sheets4::{oauth2, Result, hyper_rustls, hyper};
+use std::path::Path;
 
-pub async fn get_auth() -> Result<oauth2::authenticator::Authenticator<hyper_rustls::HttpsConnector<hyper::client::HttpConnector>>> {
-    let secret = oauth2::read_application_secret("client_secret.json")
+pub async fn get_auth<P: AsRef<Path>>(client_secret_path: P) -> Result<oauth2::authenticator::Authenticator<hyper_rustls::HttpsConnector<hyper::client::HttpConnector>>> {
+    let secret = oauth2::read_application_secret(client_secret_path)
         .await
-        .expect("client_secret.json 을 읽지 못했습니다");
+        .expect("fail to read client secret");
 
     let auth = oauth2::InstalledFlowAuthenticator::builder(
         secret,
