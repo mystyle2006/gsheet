@@ -10,8 +10,7 @@ extern crate google_sheets4 as sheets4;
 
 use crate::google_auth::get_auth;
 use crate::google_sheet::GoogleSheet;
-use std::fs;
-use anyhow::{Context, Result};
+use anyhow::{Result};
 use prettytable::{format, row, Cell, Row, Table};
 use crate::google_drive::GoogleDrive;
 use crate::util::get_client_secret_path;
@@ -31,7 +30,7 @@ async fn main() -> Result<()> {
                 .value_name("FILE_PATH")
                 .help("Sets the path to client_secret.json")
                 .takes_value(true)
-                .required(true)))
+                .default_value("client_secret.json")))
         .subcommand(SubCommand::with_name("list")
             .about("List contents of a Google Sheet")
             .arg(Arg::with_name("sheet_name")
@@ -66,15 +65,22 @@ async fn main() -> Result<()> {
             } else {
                 env::current_dir()?.join(path)
             };
+
+            if !client_secret_path.exists() {
+                eprintln!("Error: Client secret file not found at '{}'", client_secret_path.display());
+                eprintln!("Please ensure that:");
+                eprintln!("1. The file 'client_secret.json' exists in the current directory, or");
+                eprintln!("2. You've specified the correct path using the --path option");
+                eprintln!("\nTo obtain a client_secret.json file:");
+                eprintln!("1. Go to the Google Cloud Console (https://console.cloud.google.com/)");
+                eprintln!("2. Create a new project or select an existing one");
+                eprintln!("3. Enable the Google Sheets API for your project");
+                eprintln!("4. Create credentials (OAuth client ID) for desktop application");
+                eprintln!("5. Download the client configuration and save it as 'client_secret.json'");
+                return Ok(());
+            }
+
             println!("Initializing with client secret from: {:?}", client_secret_path);
-
-            let config = serde_json::json!({
-                "client_secret_path": client_secret_path.to_str().unwrap()
-            });
-            fs::write(CONFIG_FILE, serde_json::to_string_pretty(&config)?).context("Fail to write client secret")?;
-
-            let config: serde_json::Value = serde_json::from_str(&fs::read_to_string(CONFIG_FILE)?).context("Fail to read client secret")?;
-            let client_secret_path = PathBuf::from(config["client_secret_path"].as_str().unwrap());
 
             /* init 시 구글 인증까지 완료 */
             get_auth(&client_secret_path).await?;
