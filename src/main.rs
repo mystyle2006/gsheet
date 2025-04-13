@@ -49,6 +49,12 @@ async fn main() -> Result<()> {
                 .help("Sets the Google Sheet ID")
                 .takes_value(true)
                 .required(true))
+            .arg(Arg::with_name("name")
+                .short('n')
+                .long("name")
+                .value_name("SHEET_NAME")
+                .help("Sets the name of the sheet to fetch data from")
+                .takes_value(true))
             .arg(Arg::with_name("range")
                 .short('r')
                 .long("range")
@@ -117,6 +123,7 @@ async fn main() -> Result<()> {
 
     if let Some(matches) = matches.subcommand_matches("get") {
         let spreadsheet_id = matches.value_of("sheet-id").unwrap();
+        let sheet_name = matches.value_of("name").unwrap_or("Sheet1");
         let range = matches.value_of("range").unwrap_or("A1:R100");
 
         let client_secret_path = get_client_secret_path()?;
@@ -126,10 +133,9 @@ async fn main() -> Result<()> {
         let google_sheet = GoogleSheet::new(auth)?;
 
         // 스프레드시트 정보 검증하기
-        let sheet_name = "Sheet1";
         let target_sheet_id: Option<i32> = google_sheet.get_sheet_id(spreadsheet_id, sheet_name).await?;
         if target_sheet_id.is_none() {
-            debug_println!("Sheet '{}'을 찾을 수 없습니다.", sheet_name);
+            println!("Sheet '{}'을 찾을 수 없습니다.", sheet_name);
             return Ok(());
         }
 
