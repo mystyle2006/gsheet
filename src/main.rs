@@ -14,6 +14,7 @@ use std::fs;
 use anyhow::{Context, Result};
 use prettytable::{format, row, Cell, Row, Table};
 use crate::google_drive::GoogleDrive;
+use crate::util::get_client_secret_path;
 
 const CONFIG_FILE: &str = "gsheet_config.json";
 #[tokio::main]
@@ -85,8 +86,7 @@ async fn main() -> Result<()> {
     /* list 명령어 핸들러 */
     if let Some(matches) = matches.subcommand_matches("list") {
         if let Some(name) = matches.value_of("sheet_name") {
-            let config: serde_json::Value = serde_json::from_str(&fs::read_to_string(CONFIG_FILE)?).context("Fail to read client secret")?;
-            let client_secret_path = PathBuf::from(config["client_secret_path"].as_str().unwrap());
+            let client_secret_path = get_client_secret_path()?;
 
             let auth = get_auth(&client_secret_path).await?;
             let google_drive = GoogleDrive::new(auth)?;
@@ -113,8 +113,7 @@ async fn main() -> Result<()> {
         let spreadsheet_id = matches.value_of("sheet-id").unwrap();
         let range = matches.value_of("range").unwrap_or("A1:R100");
 
-        let config: serde_json::Value = serde_json::from_str(&fs::read_to_string(CONFIG_FILE)?).context("Fail to read client secret")?;
-        let client_secret_path = PathBuf::from(config["client_secret_path"].as_str().unwrap());
+        let client_secret_path = get_client_secret_path()?;
 
         let auth = get_auth(&client_secret_path).await?;
 
